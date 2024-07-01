@@ -15,7 +15,7 @@ router.post(
   EnrolledCourseControllers.createEnrolledCourse,
 );
 
-router.post(
+router.patch(
   '/update-enrolled-course-marks',
   auth('faculty'),
   validateRequest(
