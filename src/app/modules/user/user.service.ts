@@ -197,10 +197,7 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
 
 const getMe = async (userId: string, role: string) => {
   // const decoded = verifyToken(token, config.jwt_access_secret as string);
-
   // const { userId, role } = decoded;
-
-  // const result = await '';
 
   let result = null;
 
