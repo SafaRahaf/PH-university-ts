@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
 import bcrypt from 'bcrypt';
 import { Schema, model } from 'mongoose';
 import config from '../../config';
@@ -29,7 +28,7 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     role: {
       type: String,
-      enum: ['student', 'faculty', 'admin'],
+      enum: ['superAdmin', 'student', 'faculty', 'admin'],
     },
     status: {
       type: String,
@@ -47,9 +46,7 @@ const userSchema = new Schema<TUser, UserModel>(
 );
 
 userSchema.pre('save', async function (next) {
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
-  const user = this; // doc
-  // hashing password and save into DB
+  const user = this;
 
   user.password = await bcrypt.hash(
     user.password,
@@ -59,7 +56,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// set '' after saving password
 userSchema.post('save', function (doc, next) {
   doc.password = '';
   next();

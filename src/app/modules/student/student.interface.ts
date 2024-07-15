@@ -1,3 +1,4 @@
+import { AcademicFaculty } from './../academicFaculty/academicFaculty.model';
 import { Model, Types } from 'mongoose';
 
 export type TUserName = {
@@ -39,6 +40,7 @@ export type TStudent = {
   profileImg?: string;
   admissionSemester: Types.ObjectId;
   academicDepartment: Types.ObjectId;
+  AcademicFaculty: Types.ObjectId;
   isDeleted: boolean;
 };
 
