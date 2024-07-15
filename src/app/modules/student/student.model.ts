@@ -133,7 +133,7 @@ const studentSchema = new Schema<TStudent, StudentModel>(
       type: localGuradianSchema,
       required: [true, 'Local guardian information is required'],
     },
-    profileImg: { type: String },
+    profileImg: { type: String, default: '' },
     admissionSemester: {
       type: Schema.Types.ObjectId,
       ref: 'AcademicSemester',
@@ -146,7 +146,7 @@ const studentSchema = new Schema<TStudent, StudentModel>(
       type: Schema.Types.ObjectId,
       ref: 'AcademicDepartment',
     },
-    AcademicFaculty: {
+    academicFaculty: {
       type: Schema.Types.ObjectId,
       ref: 'AcademicFaculty',
     },
@@ -158,12 +158,10 @@ const studentSchema = new Schema<TStudent, StudentModel>(
   },
 );
 
-//virtual
 studentSchema.virtual('fullName').get(function () {
   return this?.name?.firstName + this?.name?.middleName + this?.name?.lastName;
 });
 
-// Query Middleware
 studentSchema.pre('find', function (next) {
   this.find({ isDeleted: { $ne: true } });
   next();
@@ -179,7 +177,6 @@ studentSchema.pre('aggregate', function (next) {
   next();
 });
 
-//creating a custom static method
 studentSchema.statics.isUserExists = async function (id: string) {
   const existingUser = await Student.findOne({ id });
   return existingUser;

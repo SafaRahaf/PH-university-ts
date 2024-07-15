@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { AcademicFaculty } from './../academicFaculty/academicFaculty.model';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import config from '../../config';
@@ -18,7 +18,6 @@ import {
   generateFacultyId,
   generateStudentId,
 } from './user.utils';
-import { verifyToken } from '../Auth/auth.utils';
 import { sendImageToCloudinary } from '../../utils/sendImgToCloudinary';
 
 const createStudentIntoDB = async (
@@ -26,17 +25,13 @@ const createStudentIntoDB = async (
   password: string,
   payload: TStudent,
 ) => {
-  // create a user object
   const userData: Partial<TUser> = {};
 
-  //if password is not given , use deafult password
   userData.password = password || (config.default_password as string);
 
-  //set student role
   userData.role = 'student';
   userData.email = payload.email;
 
-  // find academic semester info
   const admissionSemester = await AcademicSemester.findById(
     payload.admissionSemester,
   );
@@ -45,34 +40,31 @@ const createStudentIntoDB = async (
     throw new AppError(400, 'Admission semester not found');
   }
 
+  // @ts-ignore
+  payload.academicFaculty = academicDepartment.academicFaculty;
+
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
-    //set  generated id
     userData.id = await generateStudentId(admissionSemester);
 
-    const imageName = `${userData.id}${payload?.name?.firstName}`;
+    if (file) {
+      const imageName = `${userData.id}${payload?.name?.firstName}`;
 
-    const path = file?.path;
+      const path = file?.path;
 
-    // send image to  the cloudinary
-    // @ts-ignore
-    const { secure_url } = await sendImageToCloudinary(imageName, path);
+      const { secure_url } = await sendImageToCloudinary(imageName, path);
 
-    // create a user (transaction-1)
-    const newUser = await User.create([userData], { session }); // array
+      payload.profileImg = secure_url as string;
+    }
+    const newUser = await User.create([userData], { session });
 
-    //create a student
     if (!newUser.length) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
     }
-    // set id , _id as user
     payload.id = newUser[0].id;
     payload.user = newUser[0]._id;
-    payload.profileImg = secure_url;
-
-    // create a student (transaction-2)
 
     const newStudent = await Student.create([payload], { session });
 
@@ -91,18 +83,18 @@ const createStudentIntoDB = async (
   }
 };
 
-const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
-  // create a user object
+const createFacultyIntoDB = async (
+  file: any,
+  password: string,
+  payload: TFaculty,
+) => {
   const userData: Partial<TUser> = {};
 
-  //if password is not given , use deafult password
   userData.password = password || (config.default_password as string);
 
-  //set student role
   userData.role = 'faculty';
   userData.email = payload.email;
 
-  // find academic department info
   const academicDepartment = await AcademicDepartment.findById(
     payload.academicDepartment,
   );
@@ -111,25 +103,30 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
     throw new AppError(400, 'Academic department not found');
   }
 
+  // @ts-ignore
+  payload.academicFaculty = academicDepartment.academicFaculty;
+
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
-    //set  generated id
     userData.id = await generateFacultyId();
 
-    // create a user (transaction-1)
-    const newUser = await User.create([userData], { session }); // array
+    if (file) {
+      const imageName = `${userData.id}${payload?.name?.firstName}`;
+      const path = file?.path;
+      //send image to cloudinary
+      const { secure_url } = await sendImageToCloudinary(imageName, path);
+      payload.profileImg = secure_url as string;
+    }
 
-    //create a faculty
+    const newUser = await User.create([userData], { session });
+
     if (!newUser.length) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
     }
-    // set id , _id as user
     payload.id = newUser[0].id;
-    payload.user = newUser[0]._id; //reference _id
-
-    // create a faculty (transaction-2)
+    payload.user = newUser[0]._id;
 
     const newFaculty = await Faculty.create([payload], { session });
 
@@ -148,14 +145,15 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
   }
 };
 
-const createAdminIntoDB = async (password: string, payload: TAdmin) => {
-  // create a user object
+const createAdminIntoDB = async (
+  file: any,
+  password: string,
+  payload: TAdmin,
+) => {
   const userData: Partial<TUser> = {};
 
-  //if password is not given , use deafult password
   userData.password = password || (config.default_password as string);
 
-  //set student role
   userData.role = 'admin';
   userData.email = payload.email;
 
@@ -163,21 +161,24 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
 
   try {
     session.startTransaction();
-    //set  generated id
     userData.id = await generateAdminId();
 
-    // create a user (transaction-1)
+    if (file) {
+      const imageName = `${userData.id}${payload?.name?.firstName}`;
+      const path = file?.path;
+      //send image to cloudinary
+      const { secure_url } = await sendImageToCloudinary(imageName, path);
+      payload.profileImg = secure_url as string;
+    }
+
     const newUser = await User.create([userData], { session });
 
-    //create a admin
     if (!newUser.length) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create admin');
     }
-    // set id , _id as user
     payload.id = newUser[0].id;
-    payload.user = newUser[0]._id; //reference _id
+    payload.user = newUser[0]._id;
 
-    // create a admin (transaction-2)
     const newAdmin = await Admin.create([payload], { session });
 
     if (!newAdmin.length) {
@@ -196,9 +197,6 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
 };
 
 const getMe = async (userId: string, role: string) => {
-  // const decoded = verifyToken(token, config.jwt_access_secret as string);
-  // const { userId, role } = decoded;
-
   let result = null;
 
   if (role === 'student') {

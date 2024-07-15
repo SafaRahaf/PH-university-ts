@@ -40,24 +40,10 @@ export type TStudent = {
   profileImg?: string;
   admissionSemester: Types.ObjectId;
   academicDepartment: Types.ObjectId;
-  AcademicFaculty: Types.ObjectId;
+  academicFaculty: Types.ObjectId;
   isDeleted: boolean;
 };
-
-//for creating static
 
 export interface StudentModel extends Model<TStudent> {
   isUserExists(id: string): Promise<TStudent | null>;
 }
-
-// for creating instance
-
-// export interface StudentMethods {
-//   isUserExists(id: string): Promise<TStudent | null>;
-// }
-
-// export type StudentModel = Model<
-//   TStudent,
-//   Record<string, never>,
-//   StudentMethods
-// >;
