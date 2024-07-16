@@ -76,7 +76,8 @@ const getAllSemesterRegistrationsFromDB = async (
     .fields();
 
   const result = await semesterRegistrationQuery.modelQuery;
-  return result;
+  const meta = await semesterRegistrationQuery.countTotal();
+  return { result, meta };
 };
 
 const getSingleSemesterRegistrationsFromDB = async (id: string) => {
@@ -89,18 +90,6 @@ const updateSemesterRegistrationIntoDB = async (
   id: string,
   payload: Partial<TSemesterRegistration>,
 ) => {
-  /**
-   * Step1: Check if the semester is exist
-   * Step2: Check if the requested registered semester is exists
-   * Step3: If the requested semester registration is ended, we will not update anything
-   * Step4: If the requested semester registration is 'UPCOMING', we will let update everything.
-   * Step5: If the requested semester registration is 'ONGOING', we will not update anything  except status to 'ENDED'
-   * Step6: If the requested semester registration is 'ENDED' , we will not update anything
-   *
-   * UPCOMING --> ONGOING --> ENDED
-   *
-   */
-
   // check if the requested registered semester is exists
   // check if the semester is already registered!
   const isSemesterRegistrationExists = await SemesterRegistration.findById(id);
@@ -150,12 +139,6 @@ const updateSemesterRegistrationIntoDB = async (
 };
 
 const deleteSemesterRegistrationFromDB = async (id: string) => {
-  /** 
-  * Step1: Delete associated offered courses.
-  * Step2: Delete semester registraton when the status is 
-  'UPCOMING'.
-  **/
-
   // checking if the semester registration is exist
   const isSemesterRegistrationExists = await SemesterRegistration.findById(id);
 
